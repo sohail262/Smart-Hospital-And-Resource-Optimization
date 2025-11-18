@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - Smart Hospital Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="ri-stethoscope-line text-2xl text-blue-600 mr-3"></i>
+                        <span class="text-xl font-semibold text-gray-900">Doctor Dashboard</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="ri-user-3-line text-gray-400"></i>
+                        <span class="text-sm text-gray-700" id="doctorName">Dr. Smith</span>
+                    </div>
+                    <button onclick="signOut()" class="text-gray-400 hover:text-gray-600">
+                        <i class="ri-logout-box-r-line text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="ri-user-heart-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">My Patients</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalPatients">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="ri-medicine-bottle-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Prescriptions Today</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="prescriptionsToday">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                        <i class="ri-alarm-warning-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Critical Patients</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="criticalPatients">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="ri-robot-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">AI Consultations</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="aiConsultations">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Actions -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                    <h2 class="text-lg font-medium text-gray-900">Patient List</h2>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <div class="flex space-x-2">
+                            <select id="departmentFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Departments</option>
+                            </select>
+                            <select id="priorityFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Priorities</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="patientSearch" placeholder="Search patients..." 
+                                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i class="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age/Gender</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Visit</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Patient rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="bg-white px-6 py-3 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalRecords">0</span> patients
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prevBtn" onclick="previousPage()" 
+                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+                        <button id="nextBtn" onclick="nextPage()" 
+                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Details Modal -->
+    <div id="patientDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Patient Details</h3>
+                        <button onclick="closePatientDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="patientDetailsContent" class="p-6">
+                    <!-- Patient details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Prescription Modal -->
+    <div id="prescriptionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Add Prescription</h3>
+                        <button onclick="closePrescriptionModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <form id="prescriptionForm" class="space-y-6">
+                        <input type="hidden" id="prescriptionPatientId">
+                        
+                        <!-- Patient Info Display -->
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <i class="ri-user-3-line text-blue-600 mr-2"></i>
+                                <div>
+                                    <p class="font-medium text-blue-800" id="prescriptionPatientName">Patient Name</p>
+                                    <p class="text-sm text-blue-600" id="prescriptionPatientInfo">Age • Gender • Department</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Diagnosis -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
+                            <textarea id="diagnosis" rows="3" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter primary diagnosis and notes..."></textarea>
+                        </div>
+
+                        <!-- Medications -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="block text-sm font-medium text-gray-700">Medications</label>
+                                <button type="button" onclick="addMedication()" 
+                                    class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                                    <i class="ri-add-line mr-1"></i>Add Medication
+                                </button>
+                            </div>
+                            <div id="medicationsContainer" class="space-y-3">
+                                <!-- Medications will be added here -->
+                            </div>
+                        </div>
+
+                        <!-- AI Recommendations -->
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-purple-800">AI Recommendations</h4>
+                                <button type="button" onclick="getAIRecommendations()" 
+                                    class="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">
+                                    <i class="ri-robot-line mr-1"></i>Get AI Suggestions
+                                </button>
+                            </div>
+                            <div id="aiRecommendations" class="text-sm text-purple-700">
+                                Click "Get AI Suggestions" to receive Gemini AI recommendations based on patient data.
+                            </div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Instructions for Patient</label>
+                            <textarea id="instructions" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Special instructions, lifestyle recommendations, follow-up notes..."></textarea>
+                        </div>
+
+                        <!-- Follow-up -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Follow-up Required</label>
+                                <select id="followUpRequired" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="false">No Follow-up</option>
+                                    <option value="true">Yes, Follow-up Required</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Follow-up Date</label>
+                                <input type="date" id="followUpDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4 border-t">
+                            <button type="button" onclick="closePrescriptionModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                <i class="ri-save-line mr-2"></i>Save Prescription
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Records Modal -->
+    <div id="healthRecordsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Update Health Records</h3>
+                        <button onclick="closeHealthRecordsModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <form id="healthRecordsForm" class="space-y-6">
+                        <input type="hidden" id="healthRecordsPatientId">
+                        
+                        <!-- Patient Info Display -->
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <i class="ri-heart-pulse-line text-green-600 mr-2"></i>
+                                <div>
+                                    <p class="font-medium text-green-800" id="healthRecordsPatientName">Patient Name</p>
+                                    <p class="text-sm text-green-600" id="healthRecordsPatientInfo">Age • Gender • Department</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vital Signs -->
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-3">Current Vital Signs</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Blood Pressure</label>
+                                    <input type="text" id="bloodPressure" placeholder="120/80"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Heart Rate</label>
+                                    <input type="number" id="heartRate" placeholder="72"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
+                                    <input type="number" step="0.1" id="temperature" placeholder="36.5"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">O₂ Saturation (%)</label>
+                                    <input type="number" id="oxygenSaturation" placeholder="98"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Resp. Rate</label>
+                                    <input type="number" id="respiratoryRate" placeholder="16"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Notes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Clinical Notes</label>
+                            <textarea id="clinicalNotes" rows="4"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Patient examination findings, symptoms, observations..."></textarea>
+                        </div>
+
+                        <!-- Treatment Notes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Treatment Progress</label>
+                            <textarea id="treatmentNotes" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Treatment response, medication effects, recovery progress..."></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4 border-t">
+                            <button type="button" onclick="closeHealthRecordsModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                <i class="ri-save-line mr-2"></i>Update Records
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="js/gemini-ai.js"></script>
+    <script src="js/doctor.js"></script>
+</body>
+</html>

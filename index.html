@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Hospital Resource Optimization System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto">
+            <!-- Logo and Title -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-4 shadow-lg">
+                    <i class="ri-hospital-line text-3xl text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">Smart Hospital</h1>
+                <p class="text-gray-600 mt-2">Resource Optimization System</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-8" id="authContainer">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Welcome Back</h2>
+                
+                <form id="loginForm" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <div class="relative">
+                            <i class="ri-mail-line absolute left-3 top-3 text-gray-400"></i>
+                            <input type="email" id="email" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                placeholder="admin@hospital.com">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <div class="relative">
+                            <i class="ri-lock-line absolute left-3 top-3 text-gray-400"></i>
+                            <input type="password" id="password" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                placeholder="••••••••">
+                            <button type="button" onclick="togglePassword()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                                <i class="ri-eye-line" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="rememberMe" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                        </label>
+                        <a href="#" onclick="showForgotPassword()" class="text-sm text-blue-600 hover:text-blue-800">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" id="loginBtn"
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2">
+                        <span>Sign In</span>
+                        <i class="ri-arrow-right-line"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account? 
+                        <button onclick="showRegisterForm()" class="text-blue-600 hover:text-blue-800 font-medium">Sign up</button>
+                    </p>
+                                </div>
+
+                <!-- Demo Credentials -->
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
+                    <div class="space-y-1 text-xs text-blue-700">
+                        <p>Admin: admin@hospital.com / admin123</p>
+                        <p>Doctor: doctor@hospital.com / doctor123</p>
+                        <p>Nurse: nurse@hospital.com / nurse123</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="mt-8 grid grid-cols-2 gap-4">
+                <div class="bg-white/80 backdrop-blur rounded-lg p-4 text-center hover:bg-white transition cursor-pointer">
+                    <i class="ri-line-chart-line text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-sm font-medium text-gray-700">Real-time Analytics</p>
+                </div>
+                <div class="bg-white/80 backdrop-blur rounded-lg p-4 text-center hover:bg-white transition cursor-pointer">
+                    <i class="ri-robot-line text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-sm font-medium text-gray-700">AI-Powered Insights</p>
+                </div>
+                <div class="bg-white/80 backdrop-blur rounded-lg p-4 text-center hover:bg-white transition cursor-pointer">
+                    <i class="ri-shield-check-line text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-sm font-medium text-gray-700">Secure & Compliant</p>
+                </div>
+                <div class="bg-white/80 backdrop-blur rounded-lg p-4 text-center hover:bg-white transition cursor-pointer">
+                    <i class="ri-24-hours-line text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-sm font-medium text-gray-700">24/7 Monitoring</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/shared.js"></script>
+    <script>
+        // Initialize demo data on first load
+        async function initializeDemoData() {
+            try {
+                // Wait for Firebase to be loaded
+                if (typeof firebase === 'undefined' || !collections) {
+                    setTimeout(initializeDemoData, 100);
+                    return;
+                }
+                
+                // Check if demo data already exists
+                const usersSnapshot = await collections.users.limit(1).get();
+                if (!usersSnapshot.empty) return;
+
+                // Create demo users
+                const demoUsers = [
+                    {
+                        email: 'admin@hospital.com',
+                        password: 'admin123',
+                        role: 'administrator',
+                        fullName: 'System Administrator',
+                        department: 'Administration'
+                    },
+                    {
+                        email: 'doctor@hospital.com',
+                        password: 'doctor123',
+                        role: 'doctor',
+                        fullName: 'Dr. Sarah Johnson',
+                        department: 'Emergency'
+                    },
+                    {
+                        email: 'nurse@hospital.com',
+                        password: 'nurse123',
+                        role: 'nurse',
+                        fullName: 'Emily Williams',
+                        department: 'ICU'
+                    }
+                ];
+
+                for (const user of demoUsers) {
+                    try {
+                        const userCredential = await auth.createUserWithEmailAndPassword(user.email, user.password);
+                        await collections.users.doc(userCredential.user.uid).set({
+                            fullName: user.fullName,
+                            email: user.email,
+                            role: user.role,
+                            department: user.department,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch (error) {
+                        console.log('User might already exist:', error);
+                    }
+                }
+
+                // Initialize system data
+                if (window.firebaseConfig && window.firebaseConfig.initializeSystemData) {
+                    await window.firebaseConfig.initializeSystemData();
+                }
+
+                console.log('Demo data initialized successfully');
+            } catch (error) {
+                console.error('Error initializing demo data:', error);
+            }
+        }
+
+        // Run initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add login form handler
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+            
+            // Initialize demo data
+            initializeDemoData();
+        });
+
+        // Authentication functions
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            try {
+                loginBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>Signing in...';
+                loginBtn.disabled = true;
+                
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed: ' + error.message);
+                loginBtn.innerHTML = '<span>Sign In</span><i class="ri-arrow-right-line"></i>';
+                loginBtn.disabled = false;
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('regEmail').value;
+            const department = document.getElementById('department').value;
+            const role = document.getElementById('role').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await collections.users.doc(userCredential.user.uid).set({
+                    fullName: `${firstName} ${lastName}`,
+                    email: email,
+                    role: role,
+                    department: department,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('Account created successfully!');
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration failed: ' + error.message);
+            }
+        }
+
+        // UI Functions
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'ri-eye-off-line';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'ri-eye-line';
+            }
+        }
+
+        function showRegisterForm() {
+            const container = document.getElementById('authContainer');
+            container.innerHTML = `
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Create Account</h2>
+                
+                <form id="registerForm" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                            <input type="text" id="firstName" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                            <input type="text" id="lastName" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <div class="relative">
+                            <i class="ri-mail-line absolute left-3 top-3 text-gray-400"></i>
+                            <input type="email" id="regEmail" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="department" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                            <option value="Emergency">Emergency</option>
+                            <option value="ICU">ICU</option>
+                            <option value="General Ward">General Ward</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Surgery">Surgery</option>
+                            <option value="Maternity">Maternity</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <select id="role" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Role</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="technician">Technician</option>
+                            <option value="administrator">Administrator</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <div class="relative">
+                            <i class="ri-lock-line absolute left-3 top-3 text-gray-400"></i>
+                            <input type="password" id="regPassword" required minlength="6"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <div class="relative">
+                            <i class="ri-lock-line absolute left-3 top-3 text-gray-400"></i>
+                            <input type="password" id="confirmPassword" required minlength="6"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="terms" required class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <label for="terms" class="ml-2 text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-blue-600 hover:text-blue-800">Terms and Conditions</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" id="registerBtn"
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                        Create Account
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account? 
+                        <button onclick="showLoginForm()" class="text-blue-600 hover:text-blue-800 font-medium">Sign in</button>
+                    </p>
+                </div>
+            `;
+            
+            // Bind register form
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        }
+
+        function showLoginForm() {
+            location.reload();
+        }
+
+        function showForgotPassword() {
+            const container = document.getElementById('authContainer');
+            container.innerHTML = `
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Reset Password</h2>
+                
+                <form id="resetForm" class="space-y-5">
+                    <p class="text-gray-600 mb-4">Enter your email address and we'll send you a link to reset your password.</p>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <div class="relative">
+                            <i class="ri-mail-line absolute left-3 top-3 text-gray-400"></i>
+                            <input type="email" id="resetEmail" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="resetBtn"
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                        Send Reset Link
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <button onclick="showLoginForm()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="ri-arrow-left-line mr-1"></i>Back to login
+                    </button>
+                </div>
+            `;
+            
+            // Bind reset form
+            document.getElementById('resetForm').addEventListener('submit', handlePasswordReset);
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const department = document.getElementById('department').value;
+            const role = document.getElementById('role').value;
+            const registerBtn = document.getElementById('registerBtn');
+            
+            if (password !== confirmPassword) {
+                authManager.showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            try {
+                registerBtn.disabled = true;
+                registerBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>Creating account...';
+                
+                const userCredential = await firebaseConfig.auth.createUserWithEmailAndPassword(email, password);
+                
+                // Create user profile
+                await firebaseConfig.collections.users.doc(userCredential.user.uid).set({
+                    fullName: `${firstName} ${lastName}`,
+                    email,
+                    department,
+                    role,
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Create staff record if applicable
+                if (role === 'doctor' || role === 'nurse' || role === 'technician') {
+                    await firebaseConfig.collections.staff.add({
+                        userId: userCredential.user.uid,
+                        name: `${firstName} ${lastName}`,
+                        role,
+                        department,
+                        status: 'off-duty',
+                        email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                authManager.showNotification('Account created successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                authManager.showNotification(error.message, 'error');
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = 'Create Account';
+            }
+        }
+
+        async function handlePasswordReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            const resetBtn = document.getElementById('resetBtn');
+            
+            try {
+                resetBtn.disabled = true;
+                resetBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>Sending...';
+                
+                await firebaseConfig.auth.sendPasswordResetEmail(email);
+                
+                authManager.showNotification('Password reset email sent!', 'success');
+                setTimeout(() => showLoginForm(), 3000);
+                
+            } catch (error) {
+                console.error('Password reset error:', error);
+                authManager.showNotification(error.message, 'error');
+                resetBtn.disabled = false;
+                resetBtn.innerHTML = 'Send Reset Link';
+            }
+        }
+    </script>
+</body>
+</html>

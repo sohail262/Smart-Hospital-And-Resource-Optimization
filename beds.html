@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bed Management - Smart Hospital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform" id="sidebar">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span class="font-medium">Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="staff.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-nurse-line text-xl"></i>
+                    <span>Staff Management</span>
+                </a>
+                <a href="emergency.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition relative">
+                    <i class="ri-alarm-warning-line text-xl"></i>
+                    <span>Emergency</span>
+                    <span class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="ai-insights.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-robot-line text-xl"></i>
+                    <span>AI Insights</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+            <button onclick="signOut()" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition w-full">
+                <i class="ri-logout-box-r-line text-xl"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden">
+                        <i class="ri-menu-line text-xl"></i>
+                    </button>
+                    <h2 class="text-xl font-semibold text-gray-800">Bed Management</h2>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Real-time Status -->
+                    <div class="flex items-center space-x-2 px-3 py-1 bg-green-100 rounded-full">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm text-green-700">System Online</span>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <button class="relative p-2 hover:bg-gray-100 rounded-lg transition">
+                        <i class="ri-notification-3-line text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    
+                    <!-- User Profile -->
+                    <div class="flex items-center space-x-3 pl-4 border-l">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-800" id="userName">Loading...</p>
+                            <p class="text-xs text-gray-500" id="userRole">Administrator</p>
+                        </div>
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i class="ri-user-3-line text-white text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="p-6">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Bed Management</h1>
+                    <p class="text-gray-600 mt-2">Monitor bed occupancy and patient assignments</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="openManageDepartmentsModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center">
+                        <i class="ri-building-line mr-2"></i>Manage Departments
+                    </button>
+                    <button onclick="openManageBedsModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center">
+                        <i class="ri-settings-3-line mr-2"></i>Manage Beds
+                    </button>
+                    <button onclick="refreshBeds()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        <i class="ri-refresh-line mr-2"></i>Refresh
+                    </button>
+                    <button onclick="exportBedData()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                        <i class="ri-download-line mr-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="ri-hotel-bed-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Beds</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalBeds">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="ri-hotel-bed-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Available</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="availableBeds">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="ri-hotel-bed-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Occupied</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="occupiedBeds">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="ri-hotel-bed-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Maintenance</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="maintenanceBeds">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="departmentFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="statusFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Status</option>
+                            <option value="available">Available</option>
+                            <option value="occupied">Occupied</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ward</label>
+                        <select id="wardFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Wards</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" id="bedSearch" placeholder="Search by bed number..." 
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bed Grid -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Bed Layout</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">View:</span>
+                        <button onclick="toggleView('grid')" id="gridViewBtn" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">Grid</button>
+                        <button onclick="toggleView('list')" id="listViewBtn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm">List</button>
+                    </div>
+                </div>
+
+                <!-- Grid View -->
+                <div id="gridView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Beds will be dynamically loaded here -->
+                </div>
+
+                <!-- List View -->
+                <div id="listView" class="hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bed</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admitted</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bedListBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Bed list items will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Details Modal -->
+    <div id="patientDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-semibold text-gray-800">Patient Details</h3>
+                        <button onclick="closePatientDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="ri-close-line text-2xl"></i>
+                        </button>
+                    </div>
+                    <div id="patientDetailsContent">
+                        <!-- Patient details will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bed Assignment Modal -->
+    <div id="bedAssignmentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800">Assign Patient to Bed</h3>
+                        <button onclick="closeBedAssignmentModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="ri-close-line text-2xl"></i>
+                        </button>
+                    </div>
+                    <form id="bedAssignmentForm">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Patient</label>
+                                <select id="patientSelect" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Choose a patient...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                                <textarea id="assignmentNotes" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Optional notes..."></textarea>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button type="button" onclick="closeBedAssignmentModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Assign Patient</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Manage Departments Modal -->
+    <div id="manageDepartmentsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b sticky top-0 bg-white">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-800">Manage Departments</h3>
+                    <button onclick="closeManageDepartmentsModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Add Department Button -->
+                <div class="mb-6">
+                    <button onclick="openAddDepartmentForm()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center">
+                        <i class="ri-add-line mr-2"></i>Add New Department
+                    </button>
+                </div>
+
+                <!-- Add/Edit Department Form (Hidden by default) -->
+                <div id="departmentForm" class="hidden mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-gray-800 mb-4" id="formTitle">Add New Department</h4>
+                    <form id="addEditDepartmentForm" class="space-y-4">
+                        <input type="hidden" id="editDepartmentId" value="">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Department Name *</label>
+                                <input type="text" id="deptName" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    placeholder="e.g., Cardiology">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Department Code *</label>
+                                <input type="text" id="deptCode" required maxlength="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    placeholder="e.g., CRD">
+                                <p class="text-xs text-gray-500 mt-1">3 letters (used for bed numbering)</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                                <select id="deptCategory" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Select Category</option>
+                                    <option value="Medical">Medical</option>
+                                    <option value="Surgical">Surgical</option>
+                                    <option value="Diagnostic">Diagnostic</option>
+                                    <option value="Emergency">Emergency</option>
+                                    <option value="Critical Care">Critical Care</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Capacity (Beds)</label>
+                                <input type="number" id="deptCapacity" min="0" value="50"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="cancelDepartmentForm()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                                <i class="ri-save-line mr-2"></i>Save Department
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Departments List -->
+                <div class="space-y-3" id="departmentsList">
+                    <!-- Departments will be loaded here -->
+                </div>
+
+                <div id="deptLoadingIndicator" class="text-center py-8 text-gray-500">
+                    <i class="ri-loader-4-line animate-spin text-2xl"></i>
+                    <p class="mt-2">Loading departments...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Beds Modal -->
+    <div id="manageBedsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-800">Manage Department Beds</h3>
+                    <button onclick="closeManageBedsModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="manageBedsDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Target Bed Count</label>
+                        <input type="number" id="manageBedsCount" min="0" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Current beds will be shown after selecting department</p>
+                    </div>
+
+                    <div id="currentBedInfo" class="hidden p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                        <!-- Current bed info will be shown here -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeManageBedsModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button onclick="saveBedCount()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Update Bed Count
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/beds.js"></script>
+    
+    <script>
+        // Sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+        
+        // Close sidebar on mobile when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuButton = document.querySelector('[onclick="toggleSidebar()"]');
+            
+            if (window.innerWidth < 1024 && 
+                !sidebar.contains(event.target) && 
+                !menuButton.contains(event.target)) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.remove('-translate-x-full');
+            }
+        });
+    </script>
+</body>
+</html>

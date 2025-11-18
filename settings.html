@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-file-text-line text-xl"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="settings.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-settings-3-line text-xl"></i>
+                    <span class="font-medium">Settings</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4">
+                <h2 class="text-xl font-semibold text-gray-800">System Settings</h2>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="max-w-4xl mx-auto">
+                <!-- Settings Navigation -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+                    <div class="flex overflow-x-auto">
+                        <button onclick="showSettingsSection('general')" 
+                            class="settings-tab px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50">
+                            General
+                        </button>
+                        <button onclick="showSettingsSection('users')" 
+                            class="settings-tab px-6 py-3 font-medium text-gray-600 hover:text-gray-800">
+                            Users & Roles
+                        </button>
+                        <button onclick="showSettingsSection('notifications')" 
+                            class="settings-tab px-6 py-3 font-medium text-gray-600 hover:text-gray-800">
+                            Notifications
+                        </button>
+                        <button onclick="showSettingsSection('system')" 
+                            class="settings-tab px-6 py-3 font-medium text-gray-600 hover:text-gray-800">
+                            System
+                        </button>
+                        <button onclick="showSettingsSection('integrations')" 
+                            class="settings-tab px-6 py-3 font-medium text-gray-600 hover:text-gray-800">
+                            AI & Integrations
+                        </button>
+                        <button onclick="showSettingsSection('security')" 
+                            class="settings-tab px-6 py-3 font-medium text-gray-600 hover:text-gray-800">
+                            Security
+                        </button>
+                        <button onclick="showSettingsSection('billing')" 
+                            class="settings-tab px-6 py-3 font-medium text-gray-600 hover:text-gray-800">
+                            Billing & Costs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- General Settings -->
+                <div id="general-settings" class="settings-section">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">General Settings</h3>
+                        
+                        <form id="generalSettingsForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Hospital Name</label>
+                                <input type="text" id="hospitalName" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    value="Smart Hospital">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
+                                <select id="timezone" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="UTC">UTC</option>
+                                    <option value="America/New_York" selected>Eastern Time</option>
+                                    <option value="America/Chicago">Central Time</option>
+                                    <option value="America/Denver">Mountain Time</option>
+                                    <option value="America/Los_Angeles">Pacific Time</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Default Language</label>
+                                <select id="language" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="en" selected>English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+                                <select id="dateFormat" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="MM/DD/YYYY" selected>MM/DD/YYYY</option>
+                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                </select>
+                            </div>
+                            
+                            <div class="pt-4">
+                                <button type="submit" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Users & Roles Settings -->
+                <div id="users-settings" class="settings-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">User Management</h3>
+                            <button onclick="showAddUserModal()" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                <i class="ri-user-add-line mr-2"></i>Add User
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Roles Configuration -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Role Permissions</h3>
+                        <div class="space-y-4">
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-medium mb-3">Administrator</h4>
+                                <p class="text-sm text-gray-600 mb-3">Full system access and control</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">All Permissions</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-medium mb-3">Doctor</h4>
+                                <p class="text-sm text-gray-600 mb-3">Patient care and medical records access</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">View Patients</span>
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Edit Medical Records</span>
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Order Tests</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-medium mb-3">Nurse</h4>
+                                <p class="text-sm text-gray-600 mb-3">Patient care and vitals management</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">View Patients</span>
+                                    <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">Update Vitals</span>
+                                    <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">Manage Medications</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Settings -->
+                <div id="notifications-settings" class="settings-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Notification Preferences</h3>
+                        
+                        <form id="notificationSettingsForm" class="space-y-6">
+                            <div>
+                                <h4 class="font-medium mb-4">Email Notifications</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between">
+                                        <span>Critical Alerts</span>
+                                        <input type="checkbox" checked class="toggle-checkbox">
+                                    </label>
+                                    <label class="flex items-center justify-between">
+                                        <span>Daily Summary Reports</span>
+                                        <input type="checkbox" checked class="toggle-checkbox">
+                                    </label>
+                                                                        <label class="flex items-center justify-between">
+                                        <span>Resource Shortage Alerts</span>
+                                        <input type="checkbox" checked class="toggle-checkbox">
+                                    </label>
+                                    <label class="flex items-center justify-between">
+                                        <span>System Updates</span>
+                                        <input type="checkbox" class="toggle-checkbox">
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-medium mb-4">Alert Thresholds</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Bed Occupancy Alert (%)
+                                        </label>
+                                        <input type="number" id="bedOccupancyThreshold" min="50" max="100" value="85"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Low Stock Alert (items)
+                                        </label>
+                                        <input type="number" id="lowStockThreshold" min="1" max="50" value="10"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Staff-Patient Ratio Alert
+                                        </label>
+                                        <input type="number" id="staffRatioThreshold" min="0.1" max="1" step="0.1" value="0.25"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4">
+                                <button type="submit" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Save Notification Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- System Settings -->
+                <div id="system-settings" class="settings-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">System Configuration</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="font-medium mb-4">Data Retention</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Patient Records Retention (days)
+                                        </label>
+                                        <input type="number" id="patientRetention" value="365"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Analytics Data Retention (days)
+                                        </label>
+                                        <input type="number" id="analyticsRetention" value="90"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-medium mb-4">Backup Settings</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between">
+                                        <span>Automatic Daily Backups</span>
+                                        <input type="checkbox" checked class="toggle-checkbox">
+                                    </label>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Backup Time
+                                        </label>
+                                        <input type="time" id="backupTime" value="02:00"
+                                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4">
+                                <button onclick="saveSystemSettings()" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Save System Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">System Status</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between py-3 border-b">
+                                <span class="text-gray-600">System Version</span>
+                                <span class="font-medium">v2.4.1</span>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b">
+                                <span class="text-gray-600">Database Status</span>
+                                <span class="flex items-center text-green-600">
+                                    <i class="ri-checkbox-circle-line mr-1"></i>
+                                    Connected
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b">
+                                <span class="text-gray-600">Last Backup</span>
+                                <span class="font-medium">Today, 2:00 AM</span>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b">
+                                <span class="text-gray-600">Storage Used</span>
+                                <span class="font-medium">2.3 GB / 10 GB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button onclick="runSystemDiagnostics()" 
+                                class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
+                                Run Diagnostics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integrations Settings -->
+                <div id="integrations-settings" class="settings-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">External Integrations</h3>
+                        
+                        <div class="space-y-6">
+                            <!-- AI Service Integration -->
+                            <div class="border rounded-lg p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <i class="ri-robot-line text-purple-600 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Google Gemini AI</h4>
+                                            <p class="text-sm text-gray-600">Resource optimization and intelligent recommendations</p>
+                                        </div>
+                                    </div>
+                                    <span id="geminiStatus" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">Not Configured</span>
+                                </div>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Gemini API Key</label>
+                                        <input type="password" id="geminiApiKey" placeholder="Enter your Gemini API key"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Get your API key from <a href="https://ai.google.dev/" target="_blank" class="text-blue-600 hover:underline">Google AI Studio</a>
+                                        </p>
+                                    </div>
+                                    <div class="flex space-x-3">
+                                        <button onclick="saveGeminiApiKey()" class="text-sm bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">Save & Test</button>
+                                        <button onclick="testGeminiConnection()" class="text-sm text-purple-600 hover:text-purple-700">Test Connection</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lab System Integration -->
+                            <div class="border rounded-lg p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <i class="ri-test-tube-line text-green-600 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Laboratory Information System</h4>
+                                            <p class="text-sm text-gray-600">Lab results and test orders</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">Inactive</span>
+                                </div>
+                                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+                                    Configure Integration
+                                </button>
+                            </div>
+
+                            <!-- Pharmacy System -->
+                            <div class="border rounded-lg p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <i class="ri-medicine-bottle-line text-blue-600 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Pharmacy Management System</h4>
+                                            <p class="text-sm text-gray-600">Medication orders and inventory</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">Active</span>
+                                </div>
+                                <button class="text-sm text-gray-600 hover:text-gray-800">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div id="security-settings" class="settings-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Security Settings</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="font-medium mb-4">Password Policy</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between">
+                                        <span>Minimum password length</span>
+                                        <input type="number" value="8" min="6" max="20"
+                                            class="w-20 px-3 py-1 border border-gray-300 rounded-lg">
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>Require uppercase letters</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>Require numbers</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>Require special characters</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="font-medium mb-4">Session Management</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Session timeout (minutes)
+                                        </label>
+                                        <input type="number" value="30" min="5" max="120"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>Enable two-factor authentication</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button onclick="saveSecuritySettings()" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Save Security Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audit Log -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Recent Activity Log</h3>
+                            <button onclick="downloadAuditLog()" class="text-blue-600 hover:text-blue-700">
+                                <i class="ri-download-line mr-1"></i>Export Log
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-3" id="auditLog">
+                            <!-- Audit log entries will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Billing & Costs Settings -->
+                <div id="billing-settings" class="settings-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Ward Billing Rates</h3>
+                            <button onclick="showBillingRateModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                <i class="ri-add-line mr-1"></i>Add Billing Rate
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4" id="billingRatesList">
+                            <!-- Billing rates will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Patient Billing Overview</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-blue-600 font-medium">Active Bills</p>
+                                        <p class="text-2xl font-bold text-blue-800" id="activeBillsCount">0</p>
+                                    </div>
+                                    <i class="ri-file-list-line text-blue-600 text-2xl"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm text-green-600 font-medium">Total Revenue</p>
+                                        <p class="text-2xl font-bold text-green-800" id="totalRevenue">₹0</p>
+                                    </div>
+                                    <i class="ri-money-dollar-circle-line text-green-600 text-2xl"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-orange-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-orange-600 font-medium">Pending Bills</p>
+                                        <p class="text-2xl font-bold text-orange-800" id="pendingBillsCount">0</p>
+                                    </div>
+                                    <i class="ri-time-line text-orange-600 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-700">Patient</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-700">Department</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-700">Duration</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-700">Total Cost</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-700">Status</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientBillsTable" class="divide-y divide-gray-200">
+                                    <!-- Patient bills will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billing Rate Modal -->
+    <div id="billingRateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-semibold text-gray-800">Add Billing Rate</h3>
+            </div>
+            
+            <form id="billingRateForm" class="p-6 space-y-4" onsubmit="event.preventDefault(); createBillingRate();">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                    <select id="departmentId" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Department</option>
+                        <!-- Departments will be loaded here -->
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Department Name</label>
+                    <input type="text" id="departmentName" required readonly
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (₹)</label>
+                    <input type="number" id="hourlyRate" step="0.01" min="0" required placeholder="Enter hourly rate in rupees"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeBillingRateModal()" 
+                        class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                    <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                        Add Billing Rate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-semibold text-gray-800">Add New User</h3>
+            </div>
+            
+            <form id="addUserForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="newUserName" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="newUserEmail" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="newUserRole" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Role</option>
+                        <option value="administrator">Administrator</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="nurse">Nurse</option>
+                        <option value="technician">Technician</option>
+                                                <option value="receptionist">Receptionist</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                    <select id="newUserDepartment" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Department</option>
+                        <option value="Emergency">Emergency</option>
+                        <option value="ICU">ICU</option>
+                        <option value="General Ward">General Ward</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Surgery">Surgery</option>
+                        <option value="Administration">Administration</option>
+                    </select>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddUserModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Add User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Styles for Toggle -->
+    <style>
+        .toggle-checkbox {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            appearance: none;
+            background-color: #ddd;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-checkbox:checked {
+            background-color: rgb(59, 130, 246);
+        }
+
+        .toggle-checkbox::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-checkbox:checked::after {
+            transform: translateX(20px);
+        }
+    </style>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/billing.js"></script>
+</body>
+</html>

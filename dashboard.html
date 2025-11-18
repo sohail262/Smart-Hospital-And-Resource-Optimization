@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform" id="sidebar">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="staff.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-nurse-line text-xl"></i>
+                    <span>Staff Management</span>
+                </a>
+                <a href="emergency.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition relative">
+                    <i class="ri-alarm-warning-line text-xl"></i>
+                    <span>Emergency</span>
+                    <span class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="ai-insights.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-robot-line text-xl"></i>
+                    <span>AI Insights</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+            <button onclick="signOut()" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition w-full">
+                <i class="ri-logout-box-r-line text-xl"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden">
+                        <i class="ri-menu-line text-xl"></i>
+                    </button>
+                    <h2 class="text-xl font-semibold text-gray-800">System Overview</h2>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Real-time Status -->
+                    <div class="flex items-center space-x-2 px-3 py-1 bg-green-100 rounded-full">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm text-green-700">System Online</span>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <button class="relative p-2 hover:bg-gray-100 rounded-lg transition">
+                        <i class="ri-notification-3-line text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    
+                    <!-- User Profile -->
+                    <div class="flex items-center space-x-3 pl-4 border-l">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-800" id="userName">Loading...</p>
+                            <p class="text-xs text-gray-500" id="userRole">Administrator</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <i class="ri-user-3-line text-gray-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="p-6">
+            <!-- Quick Actions -->
+            <div class="mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Quick Actions</h3>
+                            <p class="text-blue-100 text-sm">Streamline your workflow with one-click actions</p>
+                        </div>
+                        <button onclick="openAddPatientQuickAction()" 
+                            class="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition flex items-center space-x-2 font-semibold shadow-md">
+                            <i class="ri-user-add-line text-xl"></i>
+                            <span>Add Patient</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Critical Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Bed Occupancy -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-hotel-bed-line text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm font-medium text-blue-600" id="bedTrend">+5%</span>
+                    </div>
+                    <h3 class="text-gray-500 text-sm font-medium">Bed Occupancy</h3>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="bedOccupancy">0%</p>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div class="bg-blue-600 h-2 rounded-full" id="bedProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Active Patients -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-user-heart-line text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm font-medium text-green-600" id="patientTrend">+12</span>
+                    </div>
+                    <h3 class="text-gray-500 text-sm font-medium">Active Patients</h3>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="activePatients">0</p>
+                    <p class="text-xs text-gray-500 mt-2">Across all departments</p>
+                </div>
+
+                <!-- Staff on Duty -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-nurse-line text-purple-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm font-medium text-purple-600" id="staffStatus">Optimal</span>
+                    </div>
+                    <h3 class="text-gray-500 text-sm font-medium">Staff on Duty</h3>
+                                        <p class="text-2xl font-bold text-gray-800 mt-1" id="staffOnDuty">0</p>
+                    <p class="text-xs text-gray-500 mt-2">Doctors: <span id="doctorsCount">0</span> | Nurses: <span id="nursesCount">0</span></p>
+                </div>
+
+                <!-- Critical Alerts -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-alert-line text-red-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm font-medium text-red-600" id="alertPriority">High</span>
+                    </div>
+                    <h3 class="text-gray-500 text-sm font-medium">Critical Alerts</h3>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="criticalAlerts">0</p>
+                    <button onclick="viewAllAlerts()" class="text-xs text-red-600 hover:text-red-700 mt-2 font-medium">View All →</button>
+                </div>
+            </div>
+
+            <!-- Department Overview & Real-time Feed -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Department Status -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Department Status</h3>
+                        <button onclick="refreshDepartments()" class="text-sm text-blue-600 hover:text-blue-700">
+                            <i class="ri-refresh-line mr-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="space-y-4" id="departmentList">
+                        <!-- Departments will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Real-time Activity Feed -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Live Activity</h3>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <div class="space-y-3 max-h-96 overflow-y-auto" id="activityFeed">
+                        <!-- Activities will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Utilization Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Bed Utilization Chart -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-[400px]"> <!-- Added fixed height -->
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Bed Utilization Trend</h3>
+                    <div class="h-[300px]"> <!-- Chart container with fixed height -->
+                        <canvas id="bedUtilizationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Resource Distribution -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-[400px]"> <!-- Added fixed height -->
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Resource Distribution</h3>
+                    <div class="h-[300px]"> <!-- Chart container with fixed height -->
+                        <canvas id="resourceDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI recommendations removed from dashboard -->
+        </div>
+    </div>
+
+    <!-- AABHA ID Verification Modal -->
+    <div id="aabhaVerificationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-800">AABHA ID Verification</h3>
+                    <button onclick="closeAabhaVerificationModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="ri-id-card-line text-blue-600 text-3xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-center text-gray-700 mb-2 font-medium">Does the patient have an AABHA ID?</p>
+                    <p class="text-center text-sm text-gray-500">AABHA (Ayushman Bharat Health Account) is a unique digital health ID</p>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="handleAabhaResponse(true)" 
+                        class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-2">
+                        <i class="ri-checkbox-circle-line text-xl"></i>
+                        <span class="font-medium">Yes, I have AABHA ID</span>
+                    </button>
+                    
+                    <button onclick="handleAabhaResponse(false)" 
+                        class="w-full bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition flex items-center justify-center space-x-2">
+                        <i class="ri-close-circle-line text-xl"></i>
+                        <span class="font-medium">No, I don't have AABHA ID</span>
+                    </button>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-xs text-blue-800">
+                        <i class="ri-information-line mr-1"></i>
+                        <strong>Note:</strong> AABHA ID helps in maintaining a unified digital health record across all healthcare facilities in India.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Patient Modal (from dashboard) -->
+    <div id="dashboardAddPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-800">Add New Patient</h3>
+                    <button onclick="closeDashboardAddPatientModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="dashboardAddPatientForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- AABHA ID Field -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            AABHA ID <span class="text-blue-600">(Ayushman Bharat Health Account)</span>
+                        </label>
+                        <input type="text" id="aabhaId" placeholder="e.g., 12-3456-7890-1234"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Enter the 14-digit AABHA ID if available</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                        <input type="text" id="dash_firstName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                        <input type="text" id="dash_lastName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                        <input type="date" id="dash_dateOfBirth" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                        <select id="dash_gender" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                        <input type="tel" id="dash_contactNumber"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
+                        <input type="tel" id="dash_emergencyContact"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department *</label>
+                        <select id="dash_patientDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
+                        <select id="dash_priority" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Chief Complaint *</label>
+                    <textarea id="dash_chiefComplaint" rows="3" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Medical History</label>
+                    <textarea id="dash_medicalHistory" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
+                    <input type="text" id="dash_allergies" placeholder="Separate multiple allergies with commas"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeDashboardAddPatientModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Add Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Management - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Use same navigation sidebar from dashboard -->
+    <!-- Navigation Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform" id="sidebar">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="staff.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-nurse-line text-xl"></i>
+                    <span>Staff Management</span>
+                </a>
+                <a href="emergency.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition relative">
+                    <i class="ri-alarm-warning-line text-xl"></i>
+                    <span>Emergency</span>
+                    <span class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="ai-insights.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-robot-line text-xl"></i>
+                    <span>AI Insights</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+            <button onclick="signOut()" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition w-full">
+                <i class="ri-logout-box-r-line text-xl"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Resource Management</h2>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <i class="ri-search-line absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="resourceSearch" placeholder="Search resources..."
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-64">
+                    </div>
+
+                    <!-- Add Resource -->
+                    <button onclick="openAddResourceModal()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                        <i class="ri-add-line"></i>
+                        <span>Add Resource</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Resource Management -->
+        <div class="p-6">
+            <!-- Department Resource Cards Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+                <div class="p-6 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Department Resource Management</h3>
+                        <button onclick="openDeptResourceModal()" 
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center space-x-2">
+                            <i class="ri-add-line"></i>
+                            <span>Add Department Resources</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="departmentResourceCards">
+                        <!-- Department resource cards will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Resource Optimization -->
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-sm mb-8 text-white">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">AI Resource Optimization</h3>
+                            <p class="text-blue-100">Get intelligent recommendations for resource allocation and optimization using real-time data from all departments, patient loads, and bed occupancy</p>
+                        </div>
+                        <button onclick="generateAIRecommendations()" 
+                            class="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition flex items-center space-x-2 font-medium">
+                            <i class="ri-robot-line"></i>
+                            <span>Generate Recommendations</span>
+                        </button>
+                    </div>
+                    <div id="aiRecommendations" class="mt-6 hidden">
+                        <!-- AI recommendations will be displayed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Categories Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Beds -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition"
+                     onclick="filterByCategory('bed')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-hotel-bed-line text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">Beds</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Total</span>
+                            <span class="font-semibold" id="totalBeds">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Available</span>
+                            <span class="font-semibold text-green-600" id="availableBeds">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Occupied</span>
+                            <span class="font-semibold text-red-600" id="occupiedBeds">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bed Availability by Department -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Bed Availability by Department</h3>
+                        <button onclick="refreshBedAvailability()" class="text-blue-600 hover:text-blue-800">
+                            <i class="ri-refresh-line"></i>
+                        </button>
+                    </div>
+                    <div id="bedAvailabilityByDept" class="space-y-3">
+                        <!-- Bed availability will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Medical Equipment -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition"
+                     onclick="filterByCategory('equipment')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-stethoscope-line text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm bg-green-100 text-green-700 px-2 py-1 rounded">Equipment</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Ventilators</span>
+                            <span class="font-semibold" id="ventilators">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Monitors</span>
+                            <span class="font-semibold" id="monitors">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">IV Pumps</span>
+                            <span class="font-semibold" id="ivPumps">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medications -->
+                                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition"
+                     onclick="filterByCategory('medication')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-medicine-bottle-line text-purple-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded">Medications</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Critical Stock</span>
+                            <span class="font-semibold text-red-600" id="criticalMeds">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Low Stock</span>
+                            <span class="font-semibold text-yellow-600" id="lowMeds">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Adequate</span>
+                            <span class="font-semibold text-green-600" id="adequateMeds">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplies -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition"
+                     onclick="filterByCategory('supply')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-box-3-line text-orange-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded">Supplies</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">PPE Kits</span>
+                            <span class="font-semibold" id="ppeKits">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Syringes</span>
+                            <span class="font-semibold" id="syringes">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Bandages</span>
+                            <span class="font-semibold" id="bandages">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Transfer Hub -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+                <div class="p-6 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Resource Transfer Hub</h3>
+                        <button onclick="openTransferModal()" 
+                            class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center space-x-2">
+                            <i class="ri-exchange-line"></i>
+                            <span>Transfer Resources</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="resourceTransferStatus" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Transfer status cards will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Resource Inventory</h3>
+                        <div class="flex items-center space-x-4">
+                            <!-- Filter -->
+                            <select id="categoryFilter" onchange="applyFilters()"
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Categories</option>
+                                <option value="bed">Beds</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="medication">Medications</option>
+                                <option value="supply">Supplies</option>
+                            </select>
+                            
+                            <!-- Export -->
+                            <button onclick="exportResourceData()" 
+                                class="text-gray-600 hover:text-gray-800 transition">
+                                <i class="ri-download-line text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resource ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resourceTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Resources will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="p-4 border-t">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-gray-700">
+                            Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalResources">0</span> resources
+                        </p>
+                        <div class="flex space-x-2">
+                            <button onclick="previousPage()" 
+                                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition disabled:opacity-50"
+                                id="prevBtn">
+                                Previous
+                            </button>
+                            <button onclick="nextPage()" 
+                                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition disabled:opacity-50"
+                                id="nextBtn">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Resource Modal -->
+    <div id="addResourceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-semibold text-gray-800">Add New Resource</h3>
+            </div>
+            
+            <form id="addResourceForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Resource Name</label>
+                        <input type="text" id="resourceName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select id="resourceCategory" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Category</option>
+                            <option value="bed">Bed</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="medication">Medication</option>
+                            <option value="supply">Supply</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="resourceDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                        <input type="number" id="resourceQuantity" min="1" value="1"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Model/Type</label>
+                        <input type="text" id="resourceModel"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <input type="text" id="resourceLocation" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea id="resourceNotes" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddResourceModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Add Resource
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Department Resource Modal -->
+    <div id="deptResourceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-semibold text-gray-800">Add Department Resources</h3>
+            </div>
+            
+            <form id="deptResourceForm" class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="deptResourceDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Equipment Section -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+                        <i class="ri-stethoscope-line mr-2 text-green-600"></i>
+                        Equipment
+                    </h4>
+                    <div id="equipmentSection" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="text" placeholder="Equipment name" class="px-3 py-2 border border-gray-300 rounded-lg">
+                            <input type="number" placeholder="Quantity" min="1" class="px-3 py-2 border border-gray-300 rounded-lg">
+                            <button type="button" onclick="addEquipmentRow()" class="bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200">
+                                <i class="ri-add-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Supplies Section -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+                        <i class="ri-box-3-line mr-2 text-orange-600"></i>
+                        Supplies
+                    </h4>
+                    <div id="suppliesSection" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="text" placeholder="Supply name" class="px-3 py-2 border border-gray-300 rounded-lg">
+                            <input type="number" placeholder="Quantity" min="1" class="px-3 py-2 border border-gray-300 rounded-lg">
+                            <button type="button" onclick="addSupplyRow()" class="bg-orange-100 text-orange-700 px-3 py-2 rounded-lg hover:bg-orange-200">
+                                <i class="ri-add-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeDeptResourceModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Save Resources
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resource Transfer Modal -->
+    <div id="transferModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-semibold text-gray-800">Transfer Resources</h3>
+            </div>
+            
+            <form id="transferForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">From Department</label>
+                        <select id="fromDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To Department</label>
+                        <select id="toDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Resource</label>
+                        <select id="transferResource" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Resource</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                        <input type="number" id="transferQuantity" min="1" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Transfer</label>
+                    <textarea id="transferReason" rows="3" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter reason for resource transfer..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeTransferModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition">
+                        Transfer Resources
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/resources.js"></script>
+</body>
+</html>

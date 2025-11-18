@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="ri-dashboard-3-line text-xl"></i><span>Dashboard</span></a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="ri-user-heart-line text-xl"></i><span>Patients</span></a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="ri-hotel-bed-line text-xl"></i><span>Bed Management</span></a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="ri-box-3-line text-xl"></i><span>Resources</span></a>
+                <a href="staff.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg"><i class="ri-nurse-line text-xl"></i><span class="font-medium">Staff Management</span></a>
+            </div>
+        </nav>
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+            <button onclick="signOut()" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition w-full">
+                <i class="ri-logout-box-r-line text-xl"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="ml-64 min-h-screen">
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Staff Management</h2>
+                <div class="flex items-center space-x-3">
+                    <button onclick="openAddStaffModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2"><i class="ri-user-add-line"></i><span>Add Staff</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <p class="text-gray-500 text-sm">On Duty</p>
+                    <p class="text-2xl font-bold" id="onDutyCount">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <p class="text-gray-500 text-sm">Doctors</p>
+                    <p class="text-2xl font-bold" id="doctorCount">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <p class="text-gray-500 text-sm">Nurses</p>
+                    <p class="text-2xl font-bold" id="nurseCount">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <input id="staffSearch" placeholder="Search staff..." class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 w-64" />
+                        <select id="staffDeptFilter" class="px-3 py-2 border rounded-lg">
+                            <option value="">All Departments</option>
+                        </select>
+                        <select id="staffRoleFilter" class="px-3 py-2 border rounded-lg">
+                            <option value="">All Roles</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="technician">Technician</option>
+                        </select>
+                        <select id="staffStatusFilter" class="px-3 py-2 border rounded-lg">
+                            <option value="">All Status</option>
+                            <option value="on-duty">On Duty</option>
+                            <option value="off-duty">Off Duty</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs text-gray-500 uppercase">
+                                <th class="px-6 py-3 text-left">Name</th>
+                                <th class="px-6 py-3 text-left">Role</th>
+                                <th class="px-6 py-3 text-left">Department</th>
+                                <th class="px-6 py-3 text-left">Status</th>
+                                <th class="px-6 py-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Staff Modal -->
+    <div id="addStaffModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800" id="staffModalTitle">Add Staff</h3>
+                <button onclick="closeAddStaffModal()" class="text-gray-500 hover:text-gray-700"><i class="ri-close-line text-xl"></i></button>
+            </div>
+            <form id="addStaffForm" class="p-6 space-y-4">
+                <input type="hidden" id="editingStaffId" />
+                <div>
+                    <label class="block text-sm mb-2">Full Name</label>
+                    <input id="staffName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm mb-2">Role</label>
+                        <select id="staffRole" class="w-full px-4 py-2 border rounded-lg" required>
+                            <option value="doctor">Doctor</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="technician">Technician</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-2">Department</label>
+                        <select id="staffDepartment" class="w-full px-4 py-2 border rounded-lg" required></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm mb-2">Email</label>
+                        <input id="staffEmail" type="email" class="w-full px-4 py-2 border rounded-lg" />
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-2">Status</label>
+                        <select id="staffStatus" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="on-duty">On Duty</option>
+                            <option value="off-duty">Off Duty</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeAddStaffModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/staff.js"></script>
+</body>
+</html>
+

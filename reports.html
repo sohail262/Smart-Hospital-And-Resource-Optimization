@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- PDF libraries will be loaded dynamically with fallbacks -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar (same as other pages) -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-file-text-line text-xl"></i>
+                    <span class="font-medium">Reports</span>
+                </a>
+                <a href="settings.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-settings-3-line text-xl"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Report Generation Center</h2>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="scheduleReport()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                        <i class="ri-calendar-line"></i>
+                        <span>Schedule Report</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- Report Templates -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Report Templates</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <button onclick="generateReport('daily-summary')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-file-chart-line text-blue-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Daily Summary</h4>
+                        <p class="text-sm text-gray-500 mt-1">Comprehensive daily operations report</p>
+                    </button>
+
+                    <button onclick="generateReport('patient-census')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-group-line text-green-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Patient Census</h4>
+                        <p class="text-sm text-gray-500 mt-1">Current patient population analysis</p>
+                    </button>
+
+                    <button onclick="generateReport('resource-utilization')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-bar-chart-box-line text-purple-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Resource Utilization</h4>
+                        <p class="text-sm text-gray-500 mt-1">Equipment and bed usage statistics</p>
+                    </button>
+
+                    <button onclick="generateReport('staff-performance')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-user-star-line text-orange-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Staff Performance</h4>
+                        <p class="text-sm text-gray-500 mt-1">Staff productivity and efficiency</p>
+                    </button>
+
+                    <button onclick="generateReport('financial-summary')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-money-dollar-circle-line text-red-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Financial Summary</h4>
+                        <p class="text-sm text-gray-500 mt-1">Revenue and cost analysis</p>
+                    </button>
+
+                    <button onclick="generateReport('quality-metrics')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-shield-star-line text-indigo-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Quality Metrics</h4>
+                        <p class="text-sm text-gray-500 mt-1">Patient care quality indicators</p>
+                    </button>
+
+                    <button onclick="generateReport('emergency-response')" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition text-left">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-alarm-warning-line text-yellow-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Emergency Response</h4>
+                        <p class="text-sm text-gray-500 mt-1">ER performance and wait times</p>
+                    </button>
+
+                    <button onclick="showCustomReportBuilder()" 
+                        class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition text-left">
+                        <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="ri-add-line text-gray-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Custom Report</h4>
+                        <p class="text-sm text-gray-500 mt-1">Build your own report</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Reports -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">Recent Reports</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="reportSearch" placeholder="Search reports..."
+                                class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                            <select id="reportFilter" 
+                                class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                                <option value="">All Types</option>
+                                <option value="daily-summary">Daily Summary</option>
+                                <option value="patient-census">Patient Census</option>
+                                <option value="resource-utilization">Resource Utilization</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Report Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Generated By</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Reports will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Report Builder Modal -->
+    <div id="customReportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+                <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-semibold text-gray-800">Custom Report Builder</h3>
+            </div>
+            
+            <div class="p-6">
+                <form id="customReportForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Report Name</label>
+                        <input type="text" id="reportName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="date" id="reportStartDate" required
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="reportEndDate" required
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Include Sections</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" value="summary" checked
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">Executive Summary</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="patients" checked
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">Patient Statistics</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="resources" checked
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">Resource Analysis</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="staff"
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">Staff Performance</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="financial"
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">Financial Metrics</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="ai-insights"
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">AI Insights & Recommendations</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Output Format</label>
+                        <select id="reportFormat" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="pdf">PDF Document</option>
+                            <option value="excel">Excel Spreadsheet</option>
+                            <option value="csv">CSV File</option>
+                            <option value="json">JSON Data</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                        <textarea id="reportNotes" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeCustomReportModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Modal -->
+    <div id="reportPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b flex items-center justify-between no-print">
+                <h3 class="text-xl font-semibold text-gray-800">Report Preview</h3>
+                <button onclick="closePreviewModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="reportPreviewContent" class="flex-1 overflow-y-auto p-6">
+                <!-- Report content will be loaded here -->
+            </div>
+            
+            <div class="p-4 border-t flex justify-end space-x-3 no-print">
+                <button onclick="printReport()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <i class="ri-printer-line mr-2"></i>Print
+                </button>
+                <button onclick="downloadReport()" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="ri-download-line mr-2"></i>Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+</html>

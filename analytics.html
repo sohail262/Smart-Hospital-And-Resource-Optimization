@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar (same as other pages) -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span class="font-medium">Analytics</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-file-text-line text-xl"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="settings.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-settings-3-line text-xl"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Analytics Dashboard</h2>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Date Range Picker -->
+                    <div class="flex items-center space-x-2">
+                        <select id="dateRange" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="today">Today</option>
+                            <option value="week" selected>Last 7 Days</option>
+                            <option value="month">Last 30 Days</option>
+                            <option value="quarter">Last 3 Months</option>
+                            <option value="year">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                        
+                        <button onclick="refreshAnalytics()" class="text-gray-600 hover:text-gray-800 transition">
+                            <i class="ri-refresh-line text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Export Button -->
+                    <button onclick="exportAnalytics()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                        <i class="ri-download-line"></i>
+                        <span>Export Report</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- Key Performance Indicators -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-pulse-line text-green-600 text-xl"></i>
+                        </div>
+                        <div id="admissionTrend" class="text-sm font-medium">
+                            <span class="text-green-600">↑ 12%</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm">Total Admissions</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="totalAdmissions">0</p>
+                    <p class="text-xs text-gray-500 mt-2">vs previous period</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-hotel-bed-line text-blue-600 text-xl"></i>
+                        </div>
+                        <div id="occupancyTrend" class="text-sm font-medium">
+                            <span class="text-blue-600">85%</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm">Avg Bed Occupancy</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="avgOccupancy">0%</p>
+                    <p class="text-xs text-gray-500 mt-2">Current: <span id="currentOccupancy">0%</span></p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-time-line text-purple-600 text-xl"></i>
+                        </div>
+                        <div id="losTrend" class="text-sm font-medium">
+                            <span class="text-purple-600">3.2 days</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm">Avg Length of Stay</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="avgLOS">0</p>
+                    <p class="text-xs text-gray-500 mt-2">Target: 3.0 days</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-nurse-line text-orange-600 text-xl"></i>
+                        </div>
+                        <div id="staffTrend" class="text-sm font-medium">
+                            <span class="text-orange-600">1:4.5</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm">Staff-Patient Ratio</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" id="staffRatio">0</p>
+                    <p class="text-xs text-gray-500 mt-2">Optimal: 1:4</p>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Patient Flow</h3>
+                    <div class="chart-container h-[400px] w-full">
+                        <canvas id="patientFlowChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Department Performance</h3>
+                    <div class="chart-container h-[400px] w-full">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Resource Utilization</h3>
+                    <div class="chart-container h-[400px] w-full">
+                        <canvas id="resourceChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Wait Times</h3>
+                    <div class="chart-container h-[400px] w-full">
+                        <canvas id="waitTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Predictions Section -->
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="ri-robot-line text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold">AI-Powered Predictions</h3>
+                            <p class="text-white/80 text-sm">Next 7 days forecast</p>
+                        </div>
+                    </div>
+                    <button onclick="viewDetailedPredictions()" 
+                        class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                        View Details
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i class="ri-user-add-line text-white/80"></i>
+                            <h4 class="font-medium">Expected Admissions</h4>
+                        </div>
+                        <p class="text-2xl font-bold" id="predictedAdmissions">0</p>
+                        <p class="text-sm text-white/70 mt-1">±<span id="admissionConfidence">0</span>% confidence</p>
+                    </div>
+                    
+                                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i class="ri-hotel-bed-line text-white/80"></i>
+                            <h4 class="font-medium">Peak Occupancy</h4>
+                        </div>
+                        <p class="text-2xl font-bold" id="predictedOccupancy">0%</p>
+                        <p class="text-sm text-white/70 mt-1">Expected on <span id="peakDay">-</span></p>
+                    </div>
+                    
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i class="ri-alert-line text-white/80"></i>
+                            <h4 class="font-medium">Resource Alerts</h4>
+                        </div>
+                        <p class="text-2xl font-bold" id="predictedAlerts">0</p>
+                        <p class="text-sm text-white/70 mt-1">Potential shortages</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800">Performance Metrics</h3>
+                    <button onclick="downloadMetricsReport()" class="text-blue-600 hover:text-blue-700">
+                        <i class="ri-download-2-line mr-1"></i>Download Report
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Metric</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trend</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metricsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Metrics will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Date Range Modal -->
+    <div id="dateRangeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Select Date Range</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <input type="date" id="startDate" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <input type="date" id="endDate" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeDateRangeModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button onclick="applyDateRange()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/analytics.js"></script>
+</body>
+</html>

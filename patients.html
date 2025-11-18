@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Management - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://unpkg.com/tesseract.js@v4.1.1/dist/tesseract.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span class="font-medium">Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-file-text-line text-xl"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="settings.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="ri-settings-3-line text-xl"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Patient Management</h2>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <i class="ri-search-line absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="patientSearch" placeholder="Search patients..."
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-64">
+                    </div>
+                    
+                    <!-- Add Patient -->
+                    <button onclick="openAddPatientModal()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                        <i class="ri-add-line"></i>
+                        <span>Add Patient</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- Patient Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-user-heart-line text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-green-600 font-medium">+12%</span>
+                    </div>
+                    <p class="text-gray-500 text-sm">Total Patients</p>
+                    <p class="text-2xl font-bold text-gray-800" id="totalPatients">0</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-user-add-line text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-blue-600 font-medium">Today</span>
+                    </div>
+                    <p class="text-gray-500 text-sm">New Admissions</p>
+                    <p class="text-2xl font-bold text-gray-800" id="newAdmissions">0</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-user-follow-line text-orange-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-orange-600 font-medium">Ready</span>
+                    </div>
+                    <p class="text-gray-500 text-sm">Pending Discharge</p>
+                    <p class="text-2xl font-bold text-gray-800" id="pendingDischarge">0</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-alarm-warning-line text-red-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-red-600 font-medium">Critical</span>
+                    </div>
+                    <p class="text-gray-500 text-sm">Critical Patients</p>
+                    <p class="text-2xl font-bold text-gray-800" id="criticalPatients">0</p>
+                </div>
+            </div>
+
+            <!-- Filters and Actions -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-4">
+                        <!-- Department Filter -->
+                        <select id="departmentFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Departments</option>
+                            <option value="Emergency">Emergency</option>
+                            <option value="ICU">ICU</option>
+                            <option value="General Ward">General Ward</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Surgery">Surgery</option>
+                            <option value="Maternity">Maternity</option>
+                        </select>
+
+                        <!-- Status Filter -->
+                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="discharged">Discharged</option>
+                            <option value="transferred">Transferred</option>
+                        </select>
+
+                        <!-- Priority Filter -->
+                        <select id="priorityFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Priorities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="exportPatientData()" class="text-gray-600 hover:text-gray-800 transition">
+                            <i class="ri-download-line text-xl"></i>
+                        </button>
+                        <button onclick="refreshPatientList()" class="text-gray-600 hover:text-gray-800 transition">
+                            <i class="ri-refresh-line text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient List -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Age/Gender</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bed</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admitted</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Patients will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="p-4 border-t">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-gray-700">
+                            Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> patients
+                        </p>
+                        <div class="flex space-x-2">
+                            <button onclick="previousPage()" id="prevBtn"
+                                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition disabled:opacity-50">
+                                Previous
+                            </button>
+                            <button onclick="nextPage()" id="nextBtn"
+                                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition disabled:opacity-50">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div id="addPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-800">Add New Patient</h3>
+                    <button type="button" onclick="openAadhaarScanner()" 
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center space-x-2">
+                        <i class="ri-scan-line"></i>
+                        <span>Scan Aadhaar</span>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="addPatientForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <input type="text" id="firstName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <input type="text" id="lastName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                        <input type="date" id="dateOfBirth" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                        <select id="gender" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                        <input type="tel" id="contactNumber"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
+                        <input type="tel" id="emergencyContact"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="patientDepartment" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                        <select id="priority" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="low">Low</option>
+                                                        <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Chief Complaint</label>
+                    <textarea id="chiefComplaint" rows="3" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Medical History</label>
+                    <textarea id="medicalHistory" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
+                    <input type="text" id="allergies" placeholder="Separate multiple allergies with commas"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddPatientModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Add Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Patient Details Modal -->
+    <div id="patientDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Patient Details</h3>
+                <button onclick="closePatientDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="patientDetailsContent" class="p-6">
+                <!-- Patient details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Vitals Modal -->
+    <div id="recordVitalsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Record New Vitals</h3>
+                <button onclick="closeRecordVitalsModal()" class="text-gray-500 hover:text-gray-700"><i class="ri-close-line text-xl"></i></button>
+            </div>
+            <form id="recordVitalsForm" class="p-6 grid grid-cols-2 gap-4">
+                <input type="hidden" id="vitalsPatientId" />
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Blood Pressure</label>
+                    <input id="v_bp" placeholder="120/80" class="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Heart Rate</label>
+                    <input id="v_hr" type="number" placeholder="72" class="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Temperature (°C)</label>
+                    <input id="v_temp" type="number" step="0.1" placeholder="36.6" class="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">O₂ Saturation (%)</label>
+                    <input id="v_spo2" type="number" placeholder="98" class="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Respiratory Rate</label>
+                    <input id="v_rr" type="number" placeholder="16" class="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div class="col-span-2 flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeRecordVitalsModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Patient Modal -->
+    <div id="updatePatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-xl w-full mx-4">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Update Patient</h3>
+                <button onclick="closeUpdatePatientModal()" class="text-gray-500 hover:text-gray-700"><i class="ri-close-line text-xl"></i></button>
+            </div>
+            <form id="updatePatientForm" class="p-6 space-y-4">
+                <input type="hidden" id="updatePatientId" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-700 mb-1">Priority</label>
+                        <select id="upd_priority" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-700 mb-1">Status</label>
+                        <select id="upd_status" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="active">Active</option>
+                            <option value="transferred">Transferred</option>
+                            <option value="discharged">Discharged</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input id="upd_dischargeReady" type="checkbox" class="rounded border-gray-300">
+                    <label for="upd_dischargeReady" class="text-sm text-gray-700">Ready for discharge</label>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Chief Complaint</label>
+                    <textarea id="upd_cc" class="w-full px-3 py-2 border rounded-lg" rows="3"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeUpdatePatientModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div id="editPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Edit Patient Information</h3>
+                <button onclick="closeEditPatientModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="editPatientContent" class="p-6">
+                <!-- Edit form will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Aadhaar Scanner Modal -->
+    <div id="aadhaarScannerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Scan Aadhaar Card</h3>
+                <button onclick="closeAadhaarScanner()" class="text-gray-500 hover:text-gray-700">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Camera Feed -->
+                <div class="mb-6">
+                    <div class="relative bg-gray-100 rounded-lg overflow-hidden" style="height: 300px;">
+                        <video id="cameraFeed" class="w-full h-full object-cover hidden" autoplay playsinline></video>
+                        <canvas id="captureCanvas" class="w-full h-full object-cover hidden"></canvas>
+                        <div id="cameraPlaceholder" class="flex items-center justify-center h-full text-gray-500">
+                            <div class="text-center">
+                                <i class="ri-camera-line text-4xl mb-2"></i>
+                                <p>Camera will appear here</p>
+                            </div>
+                        </div>
+                        <!-- Overlay guidelines -->
+                        <div class="absolute inset-4 border-2 border-dashed border-white rounded-lg pointer-events-none opacity-75">
+                            <div class="absolute top-2 left-2 text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
+                                Position Aadhaar card within this frame
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center justify-center space-x-4 mb-6">
+                    <button id="startCameraBtn" onclick="startCamera()" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                        <i class="ri-camera-line"></i>
+                        <span>Start Camera</span>
+                    </button>
+                    <button id="captureBtn" onclick="captureImage()" disabled
+                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                        <i class="ri-camera-fill"></i>
+                        <span>Capture</span>
+                    </button>
+                    <button onclick="uploadImage()" 
+                        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition flex items-center space-x-2">
+                        <i class="ri-upload-line"></i>
+                        <span>Upload Image</span>
+                    </button>
+                </div>
+
+                <!-- File Upload (hidden) -->
+                <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="processUploadedImage(this)">
+
+                <!-- Tips for better accuracy -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start space-x-2">
+                        <i class="ri-information-line text-blue-600 mt-0.5"></i>
+                        <div>
+                            <h5 class="font-medium text-blue-800 mb-2">Tips for Better Accuracy:</h5>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>• Ensure good lighting and avoid shadows</li>
+                                <li>• Keep the Aadhaar card flat and straight</li>
+                                <li>• Capture the entire card within the frame</li>
+                                <li>• Use high resolution (at least 800x600 pixels)</li>
+                                <li>• Avoid blur - hold the camera steady</li>
+                                <li>• Clean the camera lens if image appears unclear</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Status -->
+                <div id="processingStatus" class="hidden mb-4">
+                    <div class="flex items-center justify-center space-x-2 text-blue-600">
+                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <span>Processing Aadhaar card...</span>
+                    </div>
+                </div>
+
+                <!-- Extracted Data Preview -->
+                <div id="extractedDataPreview" class="hidden">
+                    <h4 class="font-semibold text-gray-800 mb-4">Extracted Information</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div id="extractedDataContent" class="space-y-2 text-sm">
+                            <!-- Extracted data will appear here -->
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="closeAadhaarScanner()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                        <button onclick="fillPatientForm()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Fill Patient Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/aadhaar-scanner.js"></script>
+    <script src="js/patients.js"></script>
+    <script src="js/billing.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Insights - Smart Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px !important;
+            width: 100% !important;
+            margin-bottom: 1rem;
+        }
+        .chart-container canvas {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation (same as other pages) -->
+    <!-- Navigation Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform" id="sidebar">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="ri-hospital-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800">Smart Hospital</h1>
+                    <p class="text-xs text-gray-500">Resource Optimization</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <div class="space-y-1">
+                <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="ri-dashboard-3-line text-xl"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-user-heart-line text-xl"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="beds.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-hotel-bed-line text-xl"></i>
+                    <span>Bed Management</span>
+                </a>
+                <a href="resources.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-box-3-line text-xl"></i>
+                    <span>Resources</span>
+                </a>
+                <a href="staff.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-nurse-line text-xl"></i>
+                    <span>Staff Management</span>
+                </a>
+                <a href="emergency.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition relative">
+                    <i class="ri-alarm-warning-line text-xl"></i>
+                    <span>Emergency</span>
+                    <span class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-line-chart-line text-xl"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="ai-insights.html" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                    <i class="ri-robot-line text-xl"></i>
+                    <span>AI Insights</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+            <button onclick="signOut()" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition w-full">
+                <i class="ri-logout-box-r-line text-xl"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+    <div class="ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg sticky top-0 z-30">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="ri-robot-line text-3xl"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold">AI-Powered Insights</h2>
+                        <p class="text-sm opacity-80">Intelligent recommendations and predictions</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="generateNewInsights()" 
+                        class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition flex items-center space-x-2">
+                        <i class="ri-refresh-line"></i>
+                        <span>Generate New Insights</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- AI Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-lightbulb-line text-purple-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-green-600 font-medium">Active</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800">Optimization Opportunities</h3>
+                    <p class="text-2xl font-bold text-gray-800 mt-2" id="optimizationCount">0</p>
+                    <p class="text-sm text-gray-500 mt-1">Potential improvements identified</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-alert-line text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-orange-600 font-medium">Monitoring</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800">Predicted Issues</h3>
+                    <p class="text-2xl font-bold text-gray-800 mt-2" id="predictedIssues">0</p>
+                    <p class="text-sm text-gray-500 mt-1">In the next 24 hours</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-bar-chart-box-line text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-sm text-blue-600 font-medium">95% Accuracy</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800">Actions Taken</h3>
+                    <p class="text-2xl font-bold text-gray-800 mt-2" id="actionsTaken">0</p>
+                    <p class="text-sm text-gray-500 mt-1">Based on AI recommendations</p>
+                </div>
+            </div>
+
+            <!-- AI Insights Dashboard -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800">Current AI Insights</h3>
+                    <select id="insightFilter" onchange="filterInsights()"
+                                                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Insights</option>
+                        <option value="critical">Critical</option>
+                        <option value="optimization">Optimization</option>
+                        <option value="prediction">Predictions</option>
+                    </select>
+                </div>
+
+                <div class="space-y-4" id="insightsList">
+                    <!-- AI insights will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Predictive Analytics Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Patient Flow Prediction -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Patient Flow Prediction</h3>
+                    <div class="chart-container">
+                        <canvas id="patientFlowPredictionChart"></canvas>
+                    </div>
+                    <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-800">
+                            <i class="ri-information-line mr-1"></i>
+                            Expected peak at <strong>2:00 PM</strong> with <strong>45 admissions</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Resource Demand Forecast -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Resource Demand Forecast</h3>
+                    <div class="chart-container">
+                        <canvas id="resourceDemandChart"></canvas>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-orange-50 rounded-lg">
+                            <p class="text-xs text-orange-600 font-medium">Critical Need</p>
+                            <p class="text-lg font-bold text-orange-800">Ventilators</p>
+                            <p class="text-sm text-orange-600">In 6-8 hours</p>
+                        </div>
+                        <div class="p-3 bg-yellow-50 rounded-lg">
+                            <p class="text-xs text-yellow-600 font-medium">Monitor</p>
+                            <p class="text-lg font-bold text-yellow-800">ICU Beds</p>
+                            <p class="text-sm text-yellow-600">85% capacity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Recommendations -->
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800">AI Recommendations</h3>
+                    <button onclick="implementAllRecommendations()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        Implement Selected
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="recommendationsList">
+                    <!-- Recommendations will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Machine Learning Model Performance -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-6">Model Performance Metrics</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Prediction Accuracy</p>
+                        <p class="text-2xl font-bold text-green-600">94.7%</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Response Time</p>
+                        <p class="text-2xl font-bold text-blue-600">1.2s</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Data Points Analyzed</p>
+                        <p class="text-2xl font-bold text-purple-600">1.2M</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Last Training</p>
+                        <p class="text-2xl font-bold text-orange-600">2h ago</p>
+                    </div>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-medium text-gray-800 mb-3">Model Confidence by Category</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm">Patient Flow Predictions</span>
+                                <span class="text-sm font-medium">96%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: 96%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm">Resource Optimization</span>
+                                <span class="text-sm font-medium">92%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                                <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm">Emergency Response</span>
+                                <span class="text-sm font-medium">89%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full" style="width: 89%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm">Staff Scheduling</span>
+                                <span class="text-sm font-medium">87%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-orange-600 h-2 rounded-full" style="width: 87%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/gemini-ai.js"></script>
+    <script src="js/ai-insights.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chartConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 0
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            };
+
+            // Initialize Patient Flow Chart
+            const patientFlowCtx = document.getElementById('patientFlowPredictionChart').getContext('2d');
+            new Chart(patientFlowCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Predicted',
+                        data: Array.from({length: 24}, () => Math.floor(Math.random() * 50)),
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    ...chartConfig,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Patients'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Initialize Resource Demand Chart
+            const resourceDemandCtx = document.getElementById('resourceDemandChart').getContext('2d');
+            new Chart(resourceDemandCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['ICU Beds', 'Ventilators', 'ER Beds', 'OR Rooms', 'Staff'],
+                    datasets: [{
+                        label: 'Current Usage',
+                        data: [85, 92, 78, 65, 88],
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)'
+                    }, {
+                        label: 'Predicted Demand',
+                        data: [95, 98, 85, 70, 92],
+                        backgroundColor: 'rgba(244, 63, 94, 0.8)'
+                    }]
+                },
+                options: {
+                    ...chartConfig,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Utilization (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
